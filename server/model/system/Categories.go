@@ -69,6 +69,10 @@ func GetRevealCategoryList() []*CategoryTree {
 	// 迭代分类树信息, 将show=true的二级分类信息添加到cl切片中
 	for _, t := range tree.Children {
 		if t.Show {
+            if len(t.Children) == 0 {
+                cl = append(cl, t)
+                continue
+            }
 			for _, c := range t.Children {
 				if c.Show {
 					cl = append(cl, c)
