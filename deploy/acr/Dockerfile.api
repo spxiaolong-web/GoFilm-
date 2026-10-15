@@ -1,0 +1,17 @@
+FROM golang:1.27.2-bookworm AS backend
+WORKDIR /build
+COPY server/go.mod server/go.sum ./
+RUN go mod download && go mod verify
+COPY server/ ./
+COPY deploy/acr/DataConfig.go /tmp/DataConfig.go
+COPY deploy/acr/overlay.json /tmp/overlay.json
+RUN CGO_ENABLED=0 go build -mod=readonly -p 2 -overlay=/tmp/overlay.json -o /gofilm .
+
+FROM debian:bookworm-slim AS api
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/* && useradd -m -u 10001 film
+WORKDIR /app
+RUN mkdir -p /app/static && chown film:film /app/static
+COPY --from=backend /gofilm /app/gofilm
+USER film
+CMD ["/app/gofilm"]
+
